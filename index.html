@@ -7,6 +7,16 @@
   <script type="module" crossorigin src="/src/main.tsx"></script>
   <!-- Puter.js Embed: Standalone! -->
   <script src="https://js.puter.com/v2/"></script>
+  <script>
+  // Wait for Puter to fully load before allowing chats
+  window.addEventListener('load', () => {
+    if (window.puter) {
+      console.log('Puter.js loaded successfully!');
+    } else {
+      console.error('Puter.js failed to load—check network/CDN.');
+    }
+  });
+  </script>
 </head>
 <body>
   <div id="root"></div>
