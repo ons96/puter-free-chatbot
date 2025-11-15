@@ -52,7 +52,12 @@ function App() {
   const scrollToBottom = () => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }
 
   const handleSend = async () => {
-    if (!input.trim() || !window.puter) return
+    if (!input.trim()) return
+    // Wait for Puter to load if needed
+    if (!window.puter) {
+      setMessages(prev => [...prev, { role: 'assistant', content: 'Puter.js loading... Try again in a sec.', timestamp: Date.now() }])
+      return
+    }
     const userMsg: Message = { role: 'user', content: input, timestamp: Date.now() }
     setMessages(prev => [...prev, userMsg])
     setInput('')
@@ -65,7 +70,7 @@ function App() {
       const response = await window.puter.ai.chat(input, { 
         model, 
         stream: true,
-        tools: input.includes('search') ? tools : undefined // Invoke on search prompts
+        tools: input.toLowerCase().includes('search') ? tools : undefined // Invoke on search prompts
       })
 
       let assistantMsg: Message = { role: 'assistant', content: '', timestamp: Date.now() }
@@ -85,8 +90,9 @@ function App() {
         setMessages(prev => prev.map(m => m.timestamp === assistantMsg.timestamp ? { ...m, content: assistantMsg.content } : m))
       }
     } catch (error) {
-      console.error(error)
-      setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${error.message}. Limits? Try lighter use.`, timestamp: Date.now() }])
+      const err = error as Error // Fix TS unknown error
+      console.error(err)
+      setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${err.message}. Limits? Try lighter use.`, timestamp: Date.now() }])
     } finally {
       setLoading(false)
     }
