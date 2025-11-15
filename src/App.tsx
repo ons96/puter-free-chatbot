@@ -91,7 +91,7 @@ function App() {
       }
     } catch (error) {
       const err = error as Error // TS fix
-      const errMsg = err.message || error || 'Unknown error (check console for details)' // Better undefined handling
+      const errMsg = err.message || (error as any)?.message || 'Unknown error (check console for details)' // Better undefined handling
       console.error('Puter error:', error); // Debug: Check browser console
       setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${errMsg}. Model "${model}" might be invalid—try another.`, timestamp: Date.now() }])
     } finally {
