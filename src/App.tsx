@@ -6,7 +6,7 @@ interface Message {
   timestamp: number
 }
 
-// Web Search Tool (Free Tavily Integration)
+// Web Search Tool (Free Tavily Integration—skipped for basic tests)
 async function webSearch(query: string, apiKey?: string): Promise<string> {
   if (!apiKey) return 'Web search unavailable (add TAVILY_API_KEY).';
   try {
@@ -37,7 +37,7 @@ const tools = [
 function App() {
   const [messages, setMessages] = useState<Message[]>(() => JSON.parse(localStorage.getItem('chatHistory') || '[]'))
   const [input, setInput] = useState('')
-  const [model, setModel] = useState('openrouter/anthropic/claude-3.5-sonnet') // Paid model default
+  const [model, setModel] = useState('openrouter:anthropic/claude-3.5-sonnet') // Fixed prefix: colon, no slash
   const [loading, setLoading] = useState(false)
   const [tavilyKey, setTavilyKey] = useState('') // Add your key here or via env
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -55,9 +55,10 @@ function App() {
     if (!input.trim()) return
     // Wait for Puter to load if needed
     if (!window.puter) {
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Puter.js loading... Try again in a sec.', timestamp: Date.now() }])
+      setMessages(prev => [...prev, { role: 'assistant', content: 'Puter.js still loading... Refresh and try again.', timestamp: Date.now() }])
       return
     }
+    console.log('Sending to model:', model); // Debug log
     const userMsg: Message = { role: 'user', content: input, timestamp: Date.now() }
     setMessages(prev => [...prev, userMsg])
     setInput('')
@@ -70,18 +71,17 @@ function App() {
       const response = await window.puter.ai.chat(input, { 
         model, 
         stream: true,
-        tools: input.toLowerCase().includes('search') ? tools : undefined // Invoke on search prompts
+        tools: input.toLowerCase().includes('search') ? tools : undefined // Skip for "test"
       })
 
       let assistantMsg: Message = { role: 'assistant', content: '', timestamp: Date.now() }
       setMessages(prev => [...prev, assistantMsg])
 
       for await (const chunk of response) {
-        // Handle tool calls (simplified: If tool invoked, run search)
+        // Handle tool calls (simplified)
         if (chunk.tool_calls?.length && chunk.tool_calls[0].function.name === 'web_search') {
           const toolQuery = chunk.tool_calls[0].function.arguments.query
           const searchResult = await webSearch(toolQuery, tavilyKey)
-          // Feed back to model (Puter handles chaining)
           const followUp = await window.puter.ai.chat(`Search results: ${searchResult}. Now respond to original query.`, { model })
           assistantMsg.content += followUp.choices[0].message.content
         } else {
@@ -90,15 +90,22 @@ function App() {
         setMessages(prev => prev.map(m => m.timestamp === assistantMsg.timestamp ? { ...m, content: assistantMsg.content } : m))
       }
     } catch (error) {
-      const err = error as Error // Fix TS unknown error
-      console.error(err)
-      setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${err.message}. Limits? Try lighter use.`, timestamp: Date.now() }])
+      const err = error as Error // TS fix
+      const errMsg = err.message || error || 'Unknown error (check console for details)' // Better undefined handling
+      console.error('Puter error:', error); // Debug: Check browser console
+      setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${errMsg}. Model "${model}" might be invalid—try another.`, timestamp: Date.now() }])
     } finally {
       setLoading(false)
     }
   }
 
-  const models = ['openrouter/openai/gpt-4o', 'openrouter/anthropic/claude-3.5-sonnet', 'openrouter/meta-llama/llama-3.1-405b', 'openrouter/mistralai/mixtral-8x22b'] // Paid ones
+  // Updated models: Colon prefix, proven OpenRouter names (paid subsidized via Puter)
+  const models = [
+    'openrouter:openai/gpt-4o', 
+    'openrouter:anthropic/claude-3.5-sonnet', 
+    'openrouter:meta-llama/llama-3.1-405b', 
+    'openrouter:mistralai/mixtral-8x22b'
+  ]
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-4">
@@ -111,7 +118,7 @@ function App() {
         className="w-full p-2 bg-gray-800 rounded mb-2"
       />
       <select value={model} onChange={e => setModel(e.target.value)} className="mb-4 p-2 bg-gray-800 rounded w-full">
-        {models.map(m => <option key={m} value={m}>{m.replace('openrouter/', '')}</option>)}
+        {models.map(m => <option key={m} value={m}>{m.replace('openrouter:', '')}</option>)}
       </select>
       <div className="border border-gray-700 rounded p-4 h-96 overflow-y-auto mb-4 space-y-2">
         {messages.map((msg, i) => (
@@ -135,6 +142,7 @@ function App() {
           Send
         </button>
       </div>
+      <p className="text-xs mt-2 opacity-70">Debug: Open Chrome console (menu > More tools > Developer tools) for logs.</p>
     </div>
   )
 }
