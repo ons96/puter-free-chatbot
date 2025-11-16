@@ -73,9 +73,7 @@ function App() {
         }),
       });
       const data = await response.json();
-      return data.results?.map((r: any) => `${r.title}: ${r.content}`).join('
-
-') || 'No results';
+      return data.results?.map((r: any) => `${r.title}: ${r.content}`).join('\n\n') || 'No results';
     } catch (error) {
       console.error('Tavily search error:', error);
       return `Search error: ${error}`;
