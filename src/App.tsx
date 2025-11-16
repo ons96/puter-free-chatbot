@@ -7,12 +7,13 @@ interface Message {
 }
 
 const MODELS = [
-  'openrouter:openai/gpt-4o',
-  'openrouter:openai/gpt-4o-mini',
-  'openrouter:anthropic/claude-3.5-sonnet',
-  'openrouter:anthropic/claude-sonnet-4',
-  'openrouter:meta-llama/llama-3.1-70b-instruct',
-  'openrouter:google/gemini-pro-1.5',
+  'gpt-4o',
+  'gpt-4o-mini',
+  'claude-sonnet-4',
+  'claude',
+  'gemini-pro-1.5',
+  'llama-3.1-70b',
+  'gpt-5-nano',  // Free tier model for testing
 ];
 
 function App() {
@@ -124,10 +125,10 @@ function App() {
         : undefined;
 
       const response = await window.puter.ai.chat(userMessage.content, {
-        model,
-        stream: true,
-        tools,
-      });
+  model,  // Already correct—just pass the model string directly
+  stream: true,
+  tools,
+});
 
       for await (const part of response) {
         if (part?.text) {
