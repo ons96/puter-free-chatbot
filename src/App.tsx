@@ -7,7 +7,7 @@ interface Message {
 }
 
 const MODELS = [
-  'gpt-5-nano',      // Free tier model
+  'gpt-5-nano',
   'gpt-4o',
   'gpt-4o-mini',
   'claude-sonnet-4',
@@ -25,7 +25,6 @@ function App() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Load chat history from localStorage
     const saved = localStorage.getItem('chatHistory');
     if (saved) {
       try {
@@ -35,7 +34,6 @@ function App() {
       }
     }
 
-    // Check if Puter is loaded
     const checkPuter = setInterval(() => {
       if (window.puter?.ai) {
         setPuterReady(true);
@@ -48,14 +46,12 @@ function App() {
   }, []);
 
   useEffect(() => {
-    // Save chat history to localStorage
     if (messages.length > 0) {
       localStorage.setItem('chatHistory', JSON.stringify(messages));
     }
   }, [messages]);
 
   useEffect(() => {
-    // Auto-scroll to bottom
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
@@ -126,7 +122,7 @@ function App() {
         : undefined;
 
       const response = await window.puter.ai.chat(userMessage.content, {
-        model,  // Pass model name directly - no prefix needed
+        model,
         stream: true,
         tools,
       });
