@@ -7,13 +7,12 @@ interface Message {
 }
 
 const MODELS = [
+  'gpt-5-nano',      // Free tier model
   'gpt-4o',
   'gpt-4o-mini',
   'claude-sonnet-4',
-  'claude',
-  'gemini-pro-1.5',
-  'llama-3.1-70b',
-  'gpt-5-nano',  // Free tier model for testing
+  'gemini-2.5-flash',
+  'llama-3.3-70b',
 ];
 
 function App() {
@@ -74,7 +73,9 @@ function App() {
         }),
       });
       const data = await response.json();
-      return data.results?.map((r: any) => `${r.title}: ${r.content}`).join('\n\n') || 'No results';
+      return data.results?.map((r: any) => `${r.title}: ${r.content}`).join('
+
+') || 'No results';
     } catch (error) {
       console.error('Tavily search error:', error);
       return `Search error: ${error}`;
@@ -125,10 +126,10 @@ function App() {
         : undefined;
 
       const response = await window.puter.ai.chat(userMessage.content, {
-  model,  // Already correct—just pass the model string directly
-  stream: true,
-  tools,
-});
+        model,  // Pass model name directly - no prefix needed
+        stream: true,
+        tools,
+      });
 
       for await (const part of response) {
         if (part?.text) {
@@ -190,7 +191,7 @@ ${searchResult}`;
           >
             {MODELS.map((m) => (
               <option key={m} value={m}>
-                {m.replace('openrouter:', '')}
+                {m}
               </option>
             ))}
           </select>
@@ -207,7 +208,7 @@ ${searchResult}`;
         <div style={{ height: '500px', overflowY: 'auto', background: '#1a1a1a', borderRadius: '8px', padding: '16px', marginBottom: '16px' }}>
           {messages.length === 0 && (
             <div style={{ color: '#666', textAlign: 'center', paddingTop: '100px' }}>
-              Type "test" to start chatting with {model.replace('openrouter:', '')}
+              Type "test" to start chatting with {model}
             </div>
           )}
 
@@ -223,7 +224,7 @@ ${searchResult}`;
               }}
             >
               <div style={{ fontSize: '12px', color: '#888', marginBottom: '4px' }}>
-                {msg.role === 'user' ? 'You' : model.split('/').pop()} · {new Date(msg.timestamp).toLocaleTimeString()}
+                {msg.role === 'user' ? 'You' : model} · {new Date(msg.timestamp).toLocaleTimeString()}
               </div>
               <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{msg.content || '...'}</div>
             </div>
@@ -260,7 +261,7 @@ ${searchResult}`;
         </div>
 
         <div style={{ marginTop: '16px', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-          Powered by Puter.js · Free OpenRouter models · No backend
+          Powered by Puter.js · Free AI models · No backend
         </div>
       </div>
     </div>
