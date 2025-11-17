@@ -8,12 +8,11 @@ interface Message {
 }
 
 const MODELS = [
-  'gpt-5-nano',
-  'gpt-4o',
-  'gpt-4o-mini',
-  'claude-sonnet-4',
-  'gemini-2.5-flash',
-  'llama-3.3-70b',
+  'openai:gpt-4o-mini',       // OpenAI's mini model
+  'openai:gpt-4o',            // OpenAI's full model
+  'anthropic:claude-3-5-sonnet-20241022',  // Claude Sonnet
+  'google:gemini-2.0-flash-exp',           // Gemini Flash
+  'meta-llama:llama-3.3-70b-instruct',     // Llama 3.3
 ];
 
 function App() {
