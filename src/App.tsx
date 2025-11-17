@@ -4,6 +4,7 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: number;
+  model?: string;  // Track which model was used
 }
 
 const MODELS = [
@@ -69,7 +70,9 @@ function App() {
         }),
       });
       const data = await response.json();
-      return data.results?.map((r: any) => `${r.title}: ${r.content}`).join('\n\n') || 'No results';
+      return data.results?.map((r: any) => `${r.title}: ${r.content}`).join('
+
+') || 'No results';
     } catch (error) {
       console.error('Tavily search error:', error);
       return `Search error: ${error}`;
@@ -83,6 +86,7 @@ function App() {
       role: 'user',
       content: input.trim(),
       timestamp: Date.now(),
+      model,  // Store which model user selected
     };
 
     setMessages((prev) => [...prev, userMessage]);
@@ -93,6 +97,7 @@ function App() {
       role: 'assistant',
       content: '',
       timestamp: Date.now(),
+      model,  // Store which model responded
     };
 
     setMessages((prev) => [...prev, assistantMessage]);
@@ -218,7 +223,7 @@ ${searchResult}`;
               }}
             >
               <div style={{ fontSize: '12px', color: '#888', marginBottom: '4px' }}>
-                {msg.role === 'user' ? 'You' : model} · {new Date(msg.timestamp).toLocaleTimeString()}
+                {msg.role === 'user' ? 'You' : (msg.model || 'AI')} · {new Date(msg.timestamp).toLocaleTimeString()}
               </div>
               <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{msg.content || '...'}</div>
             </div>
