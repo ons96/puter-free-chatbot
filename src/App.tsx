@@ -8,11 +8,14 @@ interface Message {
 }
 
 const MODELS = [
-  'openai:gpt-4o-mini',
-  'openai:gpt-4o',
-  'anthropic:claude-3-5-sonnet-20241022',
-  'google:gemini-2.0-flash-exp',
-  'meta-llama:llama-3.3-70b-instruct',
+  'gpt-4o-mini',
+  'gpt-4o',
+  'claude-3-5-sonnet-20241022',
+  'gemini-2.0-flash-exp',
+  'meta-llama/Llama-3.3-70B-Instruct-Turbo',
+  'claude-sonnet-4-5',
+  'deepseek-chat',
+  'grok-beta',
 ];
 
 function App() {
