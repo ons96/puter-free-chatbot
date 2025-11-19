@@ -64,32 +64,46 @@ curl https://your-vercel-domain.vercel.app/api/models-details
 
 ---
 
-### 3. Send Chat Message (Coming Soon)
+### 3. Send Chat Message
 
 **Endpoint:** `POST /api/chat`
 
-**Description:** Send a message to Puter's AI and get a response.
+**Description:** Send a message to Puter's AI and get a response. **No authentication required!**
 
 **Request Body:**
 ```json
 {
   "message": "Hello, how are you?",
-  "model": "gpt-4o-mini",
-  "stream": false
+  "model": "gpt-4o-mini"
 }
 ```
 
 **Parameters:**
 - `message` (string, required): The message to send
 - `model` (string, optional): Model to use (default: "gpt-4o-mini")
-- `stream` (boolean, optional): Whether to stream the response (default: false)
 
 **Response:**
 ```json
 {
-  "response": "I'm doing well, thank you for asking!",
+  "id": "chatcmpl-xxx",
+  "object": "text_completion",
+  "created": 1699000000,
   "model": "gpt-4o-mini",
-  "tokens": 15
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "I'm doing well, thank you for asking!"
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 10,
+    "completion_tokens": 15,
+    "total_tokens": 25
+  }
 }
 ```
 
@@ -140,15 +154,11 @@ You can use these endpoints with tools like:
 
 ---
 
-## Environment Variables (Optional)
+## Authentication
 
-If you want to add authentication, add to your Vercel project:
+**No API key required!** This API is completely free and public. You can call any endpoint without authentication.
 
-```
-PUTER_API_KEY=your_key_here
-```
-
-Then update the API endpoints to check for authorization header.
+If you want to add authentication later, you can update the endpoints to check for API keys.
 
 ---
 
