@@ -4,15 +4,15 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: number;
-  model?: string;  // Track which model was used
+  model?: string;
 }
 
 const MODELS = [
-  'openai:gpt-4o-mini',       // OpenAI's mini model
-  'openai:gpt-4o',            // OpenAI's full model
-  'anthropic:claude-3-5-sonnet-20241022',  // Claude Sonnet
-  'google:gemini-2.0-flash-exp',           // Gemini Flash
-  'meta-llama:llama-3.3-70b-instruct',     // Llama 3.3
+  'openai:gpt-4o-mini',
+  'openai:gpt-4o',
+  'anthropic:claude-3-5-sonnet-20241022',
+  'google:gemini-2.0-flash-exp',
+  'meta-llama:llama-3.3-70b-instruct',
 ];
 
 function App() {
@@ -24,7 +24,11 @@ function App() {
   const [puterReady, setPuterReady] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Fixed: Only access localStorage on client side
   useEffect(() => {
+    // Check if we're in the browser
+    if (typeof window === 'undefined') return;
+
     const saved = localStorage.getItem('chatHistory');
     if (saved) {
       try {
@@ -45,7 +49,9 @@ function App() {
     return () => clearInterval(checkPuter);
   }, []);
 
+  // Fixed: Only save to localStorage on client side
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     if (messages.length > 0) {
       localStorage.setItem('chatHistory', JSON.stringify(messages));
     }
@@ -83,7 +89,7 @@ function App() {
       role: 'user',
       content: input.trim(),
       timestamp: Date.now(),
-      model,  // Store which model user selected
+      model,
     };
 
     setMessages((prev) => [...prev, userMessage]);
@@ -94,13 +100,14 @@ function App() {
       role: 'assistant',
       content: '',
       timestamp: Date.now(),
-      model,  // Store which model responded
+      model,
     };
 
     setMessages((prev) => [...prev, assistantMessage]);
 
     try {
       console.log('Sending to model:', model);
+      console.log('Message:', userMessage.content);
 
       const tools = tavilyKey
         ? [
@@ -121,14 +128,20 @@ function App() {
           ]
         : undefined;
 
+      // Fixed: Better error handling
       const response = await window.puter.ai.chat(userMessage.content, {
         model,
         stream: true,
         tools,
       });
 
+      let hasContent = false;
+
       for await (const part of response) {
+        console.log('Received part:', part);
+        
         if (part?.text) {
+          hasContent = true;
           assistantMessage.content += part.text;
           setMessages((prev) => {
             const updated = [...prev];
@@ -142,10 +155,7 @@ function App() {
             if (toolCall.function?.name === 'web_search') {
               const args = JSON.parse(toolCall.function.arguments);
               const searchResult = await webSearch(args.query);
-              assistantMessage.content += `
-
-[Search: ${args.query}]
-${searchResult}`;
+              assistantMessage.content += `\n\n[Search: ${args.query}]\n${searchResult}`;
               setMessages((prev) => {
                 const updated = [...prev];
                 updated[updated.length - 1] = { ...assistantMessage };
@@ -155,9 +165,41 @@ ${searchResult}`;
           }
         }
       }
-    } catch (error) {
+
+      // If no content was received, show a message
+      if (!hasContent && !assistantMessage.content) {
+        assistantMessage.content = 'No response received from the model.';
+        setMessages((prev) => {
+          const updated = [...prev];
+          updated[updated.length - 1] = { ...assistantMessage };
+          return updated;
+        });
+      }
+
+    } catch (error: any) {
+      // Fixed: Better error display
       console.error('Chat error:', error);
-      assistantMessage.content = `Error: ${error instanceof Error ? error.message : String(error)}`;
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+        code: error.code,
+        response: error.response,
+      });
+      
+      let errorMessage = 'An error occurred';
+      
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.code) {
+        errorMessage = `Error code: ${error.code}`;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      } else {
+        errorMessage = JSON.stringify(error, null, 2);
+      }
+
+      assistantMessage.content = `Error: ${errorMessage}`;
       setMessages((prev) => {
         const updated = [...prev];
         updated[updated.length - 1] = { ...assistantMessage };
