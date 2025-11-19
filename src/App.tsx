@@ -38,7 +38,15 @@ function App() {
     // Fetch available models from Puter API
     const fetchModels = async () => {
       try {
-        const response = await fetch('https://puter.com/puterai/chat/models');
+        // Try direct fetch first
+        let response = await fetch('https://puter.com/puterai/chat/models');
+        
+        // If that fails, try with CORS proxy
+        if (!response.ok) {
+          console.warn('Direct fetch failed, trying CORS proxy...');
+          response = await fetch('https://api.allorigins.win/raw?url=https://puter.com/puterai/chat/models');
+        }
+        
         const data = await response.json();
         
         if (data.models && Array.isArray(data.models)) {
