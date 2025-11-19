@@ -35,16 +35,14 @@ function App() {
     // Check if we're in the browser
     if (typeof window === 'undefined') return;
 
-    // Fetch available models from Puter API
+    // Fetch available models from our Vercel API
     const fetchModels = async () => {
       try {
-        // Try direct fetch first
-        let response = await fetch('https://puter.com/puterai/chat/models');
+        // Fetch from our serverless API endpoint
+        const response = await fetch('/api/models');
         
-        // If that fails, try with CORS proxy
         if (!response.ok) {
-          console.warn('Direct fetch failed, trying CORS proxy...');
-          response = await fetch('https://api.allorigins.win/raw?url=https://puter.com/puterai/chat/models');
+          throw new Error(`API returned ${response.status}`);
         }
         
         const data = await response.json();
