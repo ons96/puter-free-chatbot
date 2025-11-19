@@ -7,7 +7,8 @@ interface Message {
   model?: string;
 }
 
-const MODELS = [
+// Fallback models in case the API fetch fails
+const FALLBACK_MODELS = [
   'gpt-4o-mini',
   'gpt-4o',
   'claude-3-5-sonnet-20241022',
@@ -21,16 +22,69 @@ const MODELS = [
 function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  const [model, setModel] = useState(MODELS[0]);
+  const [models, setModels] = useState<string[]>(FALLBACK_MODELS);
+  const [model, setModel] = useState('');
   const [tavilyKey, setTavilyKey] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [puterReady, setPuterReady] = useState(false);
+  const [modelsLoading, setModelsLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Fixed: Only access localStorage on client side
   useEffect(() => {
     // Check if we're in the browser
     if (typeof window === 'undefined') return;
+
+    // Fetch available models from Puter API
+    const fetchModels = async () => {
+      try {
+        const response = await fetch('https://puter.com/puterai/chat/models');
+        const data = await response.json();
+        
+        if (data.models && Array.isArray(data.models)) {
+          // Filter out test/fake models and sort by popularity
+          const validModels = data.models.filter((m: string) => 
+            !m.includes('fake') && 
+            !m.includes('test') && 
+            !m.includes('abuse') &&
+            !m.includes('costly')
+          );
+          
+          // Prioritize popular models at the top
+          const priorityModels = [
+            'gpt-4o',
+            'gpt-4o-mini',
+            'claude-sonnet-4-5',
+            'claude-3-5-sonnet-20241022',
+            'gemini-2.0-flash-exp',
+            'deepseek-chat',
+            'meta-llama/Llama-3.3-70B-Instruct-Turbo',
+            'grok-beta',
+          ];
+          
+          const sortedModels = [
+            ...priorityModels.filter(m => validModels.includes(m)),
+            ...validModels.filter((m: string) => !priorityModels.includes(m))
+          ];
+          
+          setModels(sortedModels);
+          setModel(sortedModels[0] || FALLBACK_MODELS[0]);
+          console.log(`Loaded ${sortedModels.length} models from Puter API`);
+        } else {
+          setModels(FALLBACK_MODELS);
+          setModel(FALLBACK_MODELS[0]);
+          console.warn('Failed to load models, using fallback list');
+        }
+      } catch (error) {
+        console.error('Error fetching models:', error);
+        setModels(FALLBACK_MODELS);
+        setModel(FALLBACK_MODELS[0]);
+      } finally {
+        setModelsLoading(false);
+      }
+    };
+
+    fetchModels();
 
     const saved = localStorage.getItem('chatHistory');
     if (saved) {
@@ -218,9 +272,9 @@ function App() {
       <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
         <h1 style={{ fontSize: '24px', marginBottom: '20px' }}>Puter Free Chat MVP</h1>
 
-        {!puterReady && (
+        {(!puterReady || modelsLoading) && (
           <div style={{ padding: '12px', background: '#ffa500', color: '#000', borderRadius: '8px', marginBottom: '16px' }}>
-            Loading Puter.js...
+            {modelsLoading ? 'Loading models...' : 'Loading Puter.js...'}
           </div>
         )}
 
@@ -228,9 +282,10 @@ function App() {
           <select
             value={model}
             onChange={(e) => setModel(e.target.value)}
+            disabled={modelsLoading}
             style={{ padding: '8px', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '4px', flex: '1 1 300px' }}
           >
-            {MODELS.map((m) => (
+            {models.map((m) => (
               <option key={m} value={m}>
                 {m}
               </option>
@@ -302,7 +357,7 @@ function App() {
         </div>
 
         <div style={{ marginTop: '16px', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-          Powered by Puter.js · Free AI models · No backend
+          Powered by Puter.js · {models.length} AI models · No backend
         </div>
       </div>
     </div>
